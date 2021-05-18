@@ -1,0 +1,52 @@
+int readc=0;  //counts the number of readers accessing the resource at current time.
+semaphore resource=1;  // controls access to the resource
+semaphore rmutex=1;     
+semaphore requestqueue=1;   //Keeps order of requests in FIFO mode
+
+wait(Semaphore S)
+{
+   while S<=0
+     ; //no operation   //if S<=0 block the process i.e, wait on S
+   S--;
+}
+
+signal(S)
+{
+   S++;   //Start one of the waiting process on S
+}
+
+reader() {
+<ENTRY Section>
+  wait(requestqueue);  //wait in the request order to be serviced
+  wait(rmutex);        // request access to readc
+  readc++;         //increase the reader count by 1
+  if (readc==1){     
+    wait(resource);   //if he is the first reader request resource access for readers.
+}                   
+  signal(requestqueue);    // let next in order be serviced
+  signal(rmutex);       // release access to readc
+    
+<CRITICAL Section>
+//reading is performed
+    
+<EXIT Section>
+  wait(rmutex);         // request access to readc
+  readc--;                
+  if (readc==0){        
+    signal(resource);   //if he is the last reader release resourse access
+}                       
+  signal(rmutex);       // release access to readcount
+}
+
+writer() {
+<ENTRY Section>
+  wait(requestqueue);  // wait in the request order to be serviced
+  wait(resource);      // request access to resource
+  signal(requestqueue);           // let next in line be serviced
+    
+<CRITICAL Section>
+//writing is performed
+    
+<EXIT Section>
+  signal(resource);    // release resource access for next request
+}
